@@ -202,6 +202,60 @@ export default function App() {
     return () => window.clearTimeout(timer)
   }, [user?.id, cloudReady, cloudSyncAllowed, tasks, events, mood, energy, stress, reflection, goal, financeNote, reflections, history, finance, transactions, goals])
 
+  // Refresh workspace from the account when another device saves changes.
+  // Realtime is best-effort; focus/visibility refreshes and polling are fallbacks.
+  useEffect(() => {
+    if (!supabase || !user || !cloudReady || !cloudSyncAllowed) return
+    let alive = true
+    let refreshing = false
+    const refreshWorkspace = async () => {
+      if (refreshing || document.visibilityState === 'hidden') return
+      refreshing = true
+      try {
+        const { data, error } = await supabase!.from('user_workspace')
+          .select('data').eq('user_id', user.id).maybeSingle()
+        if (!alive || error || !data?.data) return
+        const saved = data.data as Partial<SavedState>
+        if (saved.tasks) setTasks(normalizeTasks(saved.tasks))
+        if (saved.events) setEvents(saved.events)
+        if (saved.mood) setMood(saved.mood)
+        if (saved.energy !== undefined) setEnergy(saved.energy)
+        if (saved.stress !== undefined) setStress(saved.stress)
+        if (saved.reflection !== undefined) setReflection(saved.reflection)
+        if (saved.goal !== undefined) setGoal(saved.goal)
+        if (saved.financeNote !== undefined) setFinanceNote(saved.financeNote)
+        if (saved.reflections) setReflections(saved.reflections)
+        if (saved.history) setHistory(local => ({ ...saved.history, ...local }))
+        if (saved.finance) setFinance(saved.finance)
+        if (saved.transactions) setTransactions(saved.transactions)
+        if (saved.goals) setGoals(saved.goals)
+        setCloudMessage('Workspace refreshed from your account.')
+      } finally {
+        refreshing = false
+      }
+    }
+    const channel = supabase.channel(`workspace-sync-${user.id}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'user_workspace',
+        filter: `user_id=eq.${user.id}`,
+      }, () => { void refreshWorkspace() })
+      .subscribe()
+    const onFocus = () => { void refreshWorkspace() }
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void refreshWorkspace()
+    }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
+    const fallback = window.setInterval(() => { void refreshWorkspace() }, 30000)
+    return () => {
+      alive = false
+      window.clearInterval(fallback)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+      void supabase!.removeChannel(channel)
+    }
+  }, [user?.id, cloudReady, cloudSyncAllowed])
+
   // Fresh auth flow: use the deployed app base path for every email callback,
   // and never retry automatically when Supabase's email provider rejects or throttles a request.
   function authRedirectUrl() {
