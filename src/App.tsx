@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Activity, Apple, BarChart3, Check, ChevronDown, CirclePlus, Dumbbell, Flame, Footprints, HeartPulse, Pencil, Plus, Sparkles, Trash2, Trophy, Utensils, X } from 'lucide-react'
 
 type Meal = { id: string; name: string; calories: number; protein: number; carbs: number; fat: number; source: string; time: string }
@@ -91,4 +91,4 @@ function WorkoutRow({workout,onToggle,onEdit,onDelete}:{workout:Workout;onToggle
  return <article className={workout.done?'workout-row done':'workout-row'}><button className={workout.done?'check-circle checked':'check-circle'} onClick={onToggle} aria-label={workout.done?'علامت‌گذاری به‌عنوان انجام‌نشده':'علامت‌گذاری به‌عنوان انجام‌شده'}>{workout.done&&<Check size={15}/>}</button><div className="workout-symbol"><Dumbbell size={18}/></div><div className="workout-info"><strong>{workout.title}</strong><span>{workout.detail}</span></div><span className="duration">{fmt(workout.minutes)} دقیقه</span><button className="icon-btn" onClick={onEdit} aria-label="ویرایش تمرین"><Pencil size={16}/></button>{onDelete&&<button className="icon-btn danger" onClick={onDelete} aria-label="حذف تمرین"><Trash2 size={16}/></button>}</article>
 }
 function Empty({title,text}:{title:string;text:string}) { return <div className="empty"><div className="empty-icon"><CirclePlus size={21}/></div><strong>{title}</strong><p>{text}</p></div> }
-function Modal({title,children,onClose}:{title:string;children:React.ReactNode;onClose:()=>void}) { return <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><section className="modal" role="dialog" aria-modal="true" aria-label={title}><div className="modal-head"><h2>{title}</h2><button className="icon-btn" onClick={onClose} aria-label="بستن"><X size={19}/></button></div>{children}</section></div> }
+function Modal({title,children,onClose}:{title:string;children:ReactNode;onClose:()=>void}) { return <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><section className="modal" role="dialog" aria-modal="true" aria-label={title}><div className="modal-head"><h2>{title}</h2><button className="icon-btn" onClick={onClose} aria-label="بستن"><X size={19}/></button></div>{children}</section></div> }
