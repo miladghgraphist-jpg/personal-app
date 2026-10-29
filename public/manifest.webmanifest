@@ -1,25 +1,20 @@
 {
   "id": "/personal-app/",
-  "name": "Personal OS",
-  "short_name": "Personal OS",
-  "description": "A calmer way to plan your day.",
-  "lang": "en",
+  "name": "روبه‌راه | مسیر سلامت تو",
+  "short_name": "روبه‌راه",
+  "description": "مسیر شخصی تغذیه، تمرین و پیشرفت.",
+  "lang": "fa",
+  "dir": "rtl",
   "start_url": "/personal-app/",
   "scope": "/personal-app/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f7f6fb",
-  "theme_color": "#f7f6fb",
+  "background_color": "#f6f8f5",
+  "theme_color": "#f6f8f5",
   "icons": [
     {
       "src": "/personal-app/icon.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/personal-app/icon.svg",
-      "sizes": "512x512",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     }

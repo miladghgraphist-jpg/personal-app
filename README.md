@@ -1,24 +1,21 @@
-# Personal OS
+# روبه‌راه — مسیر سلامت تو
 
-A standalone personal planning and wellbeing app. This repository is independent from Persuna App, Persuna OS, and the Persuna Studio website.
+A fresh, Persian-first RTL app for editable exercise planning, nutrition logging with source attribution, and progress tracking.
 
-## Stack
-- React + TypeScript + Vite
-- Responsive pastel-gradient interface
-- Device-local persistence plus optional Supabase cloud sync
-- Private per-user data stored in PostgreSQL with Row Level Security (RLS)
+## Features
+- Daily nutrition log with calories, protein, carbohydrates, fat, meal type, and an explicit source/method field.
+- Editable, addable, and removable workout items with duration and completion state.
+- Optional weight history and day-by-day navigation.
+- A custom original companion character that responds to daily progress.
+- Responsive mobile/desktop interface.
+- New isolated local storage key: `fit-journey-v1`. It does not read or import any previous app data.
 
-## Run locally
-1. Copy `.env.example` to `.env.local` (the public project URL/key are prefilled for this project).
-2. Install dependencies and start the app:
+## Run
 ```bash
 npm install
 npm run dev
+npm run build
 ```
-3. Use the account/avatar button in the app and request a secure email sign-in link to enable cloud sync.
 
-## Build validation
-GitHub Actions runs a production build on pushes and pull requests to `main`.
-
-## Data and privacy
-The app always keeps a local copy in this browser. Once signed in, it also syncs the workspace to the private `user_workspace` table. Row Level Security restricts reads/writes to the authenticated user's own row. Only the publishable browser key is used; never add a service-role key to the client or repository. Cloud sync requires the deployment's environment variables and the Supabase Auth email sign-in to be configured. Finance values begin at zero and are illustrative until edited. This is a personal planning tool, not a diagnostic or medical record system.
+## Privacy
+This version saves data in the current browser/device only. Clearing browser storage removes this app's local records. No old workspace data or personal profile is imported.

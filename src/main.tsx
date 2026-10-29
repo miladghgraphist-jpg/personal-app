@@ -3,10 +3,15 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import './styles.css'
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL })
-      .catch((error) => console.error('Personal OS service worker registration failed:', error))
+// Remove legacy offline caches from the previous application before mounting the clean app.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(registrations.map(registration => registration.unregister()))
+    if ('caches' in window) {
+      const names = await caches.keys()
+      await Promise.all(names.map(name => caches.delete(name)))
+    }
   })
 }
 
