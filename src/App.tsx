@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import FitnessNutrition, { initialFitnessData, type FitnessData } from './components/FitnessNutrition'
 import { supabase } from './lib/supabase'
 import {
   Activity, ArrowDownRight, ArrowRight, ArrowUpRight, Bell, BookOpen,
@@ -7,7 +8,7 @@ import {
   Plus, Search, Settings2, ShieldCheck, Sparkles, Target, Wind, X, UserRound, Camera, LockKeyhole, Mail
 } from 'lucide-react'
 
-type Section = 'Today' | 'Planner' | 'Goals' | 'Wellbeing' | 'Finance' | 'Reviews' | 'Anxiety Tracker' | 'Breathe & Focus' | 'Settings'
+type Section = 'Today' | 'Planner' | 'Goals' | 'Wellbeing' | 'Finance' | 'Reviews' | 'Health & Fitness' | 'Anxiety Tracker' | 'Breathe & Focus' | 'Settings'
 type Task = { id: number; title: string; time: string; category: string; done: boolean; scope?: 'today' | 'planner'; date?: string }
 type CalendarEvent = { id: number; title: string; date: string; time: string; reminderMinutes: number; notifiedKey?: string }
 type DailyRecord = { date: string; tasksTotal: number; tasksCompleted: number; mood: string; energy: number; stress: number; reflection: string; updatedAt: string }
@@ -16,7 +17,7 @@ type PersonalGoal = { id: number; title: string; targetDate: string; done: boole
 const nav: { name: Section; icon: typeof LayoutDashboard }[] = [
   { name: 'Today', icon: LayoutDashboard }, { name: 'Planner', icon: ListTodo },
   { name: 'Goals', icon: Target }, { name: 'Wellbeing', icon: Heart },
-  { name: 'Finance', icon: CreditCard }, { name: 'Reviews', icon: BookOpen },
+  { name: 'Finance', icon: CreditCard }, { name: 'Reviews', icon: BookOpen }, { name: 'Health & Fitness', icon: Activity },
 ]
 const extras: { name: Section; icon: typeof Wind }[] = [
   { name: 'Anxiety Tracker', icon: Activity }, { name: 'Breathe & Focus', icon: Wind },
@@ -54,7 +55,7 @@ function normalizeTasks(tasks: Task[]): Task[] {
   return tasks.map(task => ({ ...task, scope: task.scope ?? 'today', date: task.date ?? today }))
 }
 const STORAGE_KEY = 'personal-os:v1'
-type SavedState = { tasks: Task[]; events?: CalendarEvent[]; mood: string; energy: number; stress: number; reflection: string; goal: string; financeNote: string; reflections: Record<string, string>; history?: Record<string, DailyRecord>; finance: { income: string; essentials: string; commitments: string }; transactions?: MoneyTransaction[]; goals?: PersonalGoal[] }
+type SavedState = { tasks: Task[]; events?: CalendarEvent[]; mood: string; energy: number; stress: number; reflection: string; goal: string; financeNote: string; reflections: Record<string, string>; history?: Record<string, DailyRecord>; finance: { income: string; essentials: string; commitments: string }; transactions?: MoneyTransaction[]; goals?: PersonalGoal[]; fitnessData?: FitnessData }
 function loadSavedState(): Partial<SavedState> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -86,6 +87,7 @@ export default function App() {
   const [reflection, setReflection] = useState(() => loadSavedState().reflection ?? '')
   const [goal, setGoal] = useState(() => loadSavedState().goal ?? '')
   const [goals, setGoals] = useState<PersonalGoal[]>(() => loadSavedState().goals ?? [])
+  const [fitnessData, setFitnessData] = useState<FitnessData>(() => loadSavedState().fitnessData ?? initialFitnessData)
   const [newGoalTitle, setNewGoalTitle] = useState('')
   const [newGoalDate, setNewGoalDate] = useState('')
   const [financeNote, setFinanceNote] = useState(() => loadSavedState().financeNote ?? '')
@@ -118,9 +120,9 @@ export default function App() {
   const [cloudNeedsChoice, setCloudNeedsChoice] = useState(false)
 
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ tasks, events, mood, energy, stress, reflection, goal, financeNote, reflections, history, finance, transactions, goals } satisfies SavedState)) }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ tasks, events, mood, energy, stress, reflection, goal, financeNote, reflections, history, finance, transactions, goals, fitnessData } satisfies SavedState)) }
     catch { /* Storage may be unavailable in private browsing; the app remains usable for this session. */ }
-  }, [tasks, events, mood, energy, stress, reflection, goal, financeNote, reflections, history, finance, transactions, goals])
+  }, [tasks, events, mood, energy, stress, reflection, goal, financeNote, reflections, history, finance, transactions, goals, fitnessData])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -180,6 +182,7 @@ export default function App() {
         if (saved.finance) setFinance(saved.finance)
         if (saved.transactions) setTransactions(saved.transactions)
         if (saved.goals) setGoals(saved.goals)
+        if (saved.fitnessData) setFitnessData(saved.fitnessData)
         setCloudSyncAllowed(true)
         setCloudMessage('Your account workspace loaded. Cloud sync is ready.')
       } else {
@@ -195,12 +198,12 @@ export default function App() {
     const client = supabase
     if (!client || !user || !cloudReady || !cloudSyncAllowed) return
     const timer = window.setTimeout(async () => {
-      const payload = { tasks, events, mood, energy, stress, reflection, goal, financeNote, reflections, history, finance, transactions, goals }
+      const payload = { tasks, events, mood, energy, stress, reflection, goal, financeNote, reflections, history, finance, transactions, goals, fitnessData }
       const { error } = await client.from('user_workspace').upsert({ user_id: user.id, data: payload }, { onConflict: 'user_id' })
       setCloudMessage(error ? 'Cloud sync issue. Your data is still saved on this device.' : 'Synced securely to your private account.')
     }, 650)
     return () => window.clearTimeout(timer)
-  }, [user?.id, cloudReady, cloudSyncAllowed, tasks, events, mood, energy, stress, reflection, goal, financeNote, reflections, history, finance, transactions, goals])
+  }, [user?.id, cloudReady, cloudSyncAllowed, tasks, events, mood, energy, stress, reflection, goal, financeNote, reflections, history, finance, transactions, goals, fitnessData])
 
   // Refresh workspace from the account when another device saves changes.
   // Realtime is best-effort; focus/visibility refreshes and polling are fallbacks.
@@ -229,6 +232,7 @@ export default function App() {
         if (saved.finance) setFinance(saved.finance)
         if (saved.transactions) setTransactions(saved.transactions)
         if (saved.goals) setGoals(saved.goals)
+        if (saved.fitnessData) setFitnessData(saved.fitnessData)
         setCloudMessage('Workspace refreshed from your account.')
       } finally {
         refreshing = false
@@ -474,6 +478,8 @@ export default function App() {
         {section === 'Wellbeing' && <><PageTitle eyebrow="CARE WITHOUT KEEPING SCORE" title="Wellbeing" sub="A gentle check-in, not another thing to perfect."/><div className="wellbeing-grid"><section className="panel generic-panel"><div className="round-icon peach"><Heart/></div><h3>How is your energy?</h3><p className="muted">Choose what feels closest today.</p><input className="range" type="range" min="1" max="10" value={energy} onChange={e=>setEnergy(+e.target.value)}/><div className="range-labels"><span>Running low</span><b>{energy}/10</b><span>Plenty of energy</span></div></section><section className="panel generic-panel"><div className="round-icon mint"><Moon/></div><h3>What would support you?</h3><p className="muted">You can choose just one.</p><div className="support-list">{['A proper meal','A short walk','A little rest','Talk to someone','A calmer evening'].map(s=><button key={s} onClick={()=>notify(`Gentle reminder: ${s.toLowerCase()}`)}><CheckCircle2 size={16}/>{s}<ArrowRight size={14}/></button>)}</div></section></div></>}
         {section === 'Finance' && <><PageTitle eyebrow="CLARITY, NOT JUDGEMENT" title="Money overview" sub="A simple snapshot. Your numbers stay yours."/><div className="finance-note"><ShieldCheck size={17}/> Sample values start at zero. Nothing is connected to a bank.</div><div className="finance-grid">{([['Monthly income','income',ArrowUpRight],['Essential costs','essentials',ArrowDownRight],['Debt & commitments','commitments',CreditCard]] as const).map(([label,key,Icon])=><section className="panel finance-card" key={key}><div className="finance-card-top"><span>{label}</span><Icon size={17}/></div><label><span>Amount (your currency)</span><input value={finance[key]} inputMode="decimal" onChange={e=>setFinance(old=>({...old,[key]:e.target.value}))}/></label><small>Saved automatically</small></section>)}</div><div className="finance-summary-grid"><section className="panel finance-summary"><span>Recorded income</span><strong>{transactions.filter(t=>t.type==='income').reduce((sum,t)=>sum+(Number(t.amount)||0),0).toLocaleString()}</strong><small>From transactions below</small></section><section className="panel finance-summary"><span>Recorded expenses</span><strong>{transactions.filter(t=>t.type==='expense').reduce((sum,t)=>sum+(Number(t.amount)||0),0).toLocaleString()}</strong><small>From transactions below</small></section><section className="panel finance-summary"><span>Net recorded cash</span><strong>{(transactions.reduce((sum,t)=>sum+(t.type==='income'?1:-1)*(Number(t.amount)||0),0)).toLocaleString()}</strong><small>Income minus expenses</small></section></div><section className="panel generic-panel finance-entry"><div className="panel-heading"><div><h3>Add a transaction</h3><p>Record money in or money out. No bank connection required.</p></div></div><form className="finance-form" onSubmit={e=>{e.preventDefault();const amount=Number(transactionAmount);if(!transactionTitle.trim()||!transactionAmount.trim()||!Number.isFinite(amount)||amount<=0){notify('Enter a description and a valid amount greater than zero.');return}setTransactions(old=>[{id:Date.now(),title:transactionTitle.trim(),amount:String(amount),type:transactionType,date:transactionDate},...old]);setTransactionTitle('');setTransactionAmount('');notify('Transaction saved.')}}><label>Description<input value={transactionTitle} onChange={e=>setTransactionTitle(e.target.value)} placeholder="e.g. Groceries, salary" required maxLength={100}/></label><label>Amount<input value={transactionAmount} onChange={e=>setTransactionAmount(e.target.value)} inputMode="decimal" type="number" min="0.01" step="0.01" placeholder="0.00" required/></label><label>Type<select value={transactionType} onChange={e=>setTransactionType(e.target.value as 'income'|'expense')}><option value="expense">Expense</option><option value="income">Income</option></select></label><label>Date<input type="date" value={transactionDate} onChange={e=>setTransactionDate(e.target.value)} required/></label><button className="primary-button" type="submit"><Plus size={15}/> Save transaction</button></form></section><section className="panel generic-panel"><div className="panel-heading"><div><h3>Transactions</h3><p>Your manually recorded money activity.</p></div><span className="eyebrow">{transactions.length} RECORDS</span></div>{transactions.length ? <div className="finance-transactions">{transactions.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).map(item=><div className="finance-transaction" key={item.id}><div className={`finance-transaction-icon ${item.type}`}>{item.type==='income'?<ArrowDownRight size={17}/>:<ArrowUpRight size={17}/>}</div><div className="finance-transaction-main"><b>{item.title}</b><span>{item.date} · {item.type==='income'?'Income':'Expense'}</span></div><strong className={item.type==='income'?'money-in':'money-out'}>{item.type==='income'?'+':'−'}{Number(item.amount).toLocaleString()}</strong><button type="button" className="row-more" aria-label={`Delete ${item.title}`} title="Delete transaction" onClick={()=>{if(window.confirm('Delete this transaction?'))setTransactions(old=>old.filter(t=>t.id!==item.id))}}><X size={15}/></button></div>)}</div> : <div className="empty-state">No transactions yet. Add your first income or expense above.</div>}</section><section className="panel generic-panel"><h3>One money question</h3><p className="muted">What is the most useful financial decision you can make this week?</p><textarea value={financeNote} onChange={e=>setFinanceNote(e.target.value)} placeholder="Write a note to yourself…"/></section></>}
         {section === 'Reviews' && <><PageTitle eyebrow="NOTICE, LEARN, RESET" title="Daily reflection" sub="A few honest lines are more than enough."/><div className="three-cards"><InfoCard icon={<CheckCircle2/>} title="Tasks completed" text={`${weekTaskDone} of ${weekTaskTotal} tasks recorded over ${weekRecords.length} day${weekRecords.length === 1 ? '' : 's'} in the last 7 days.`} tone="lilac"/><InfoCard icon={<Heart/>} title="Average energy" text={`${averageEnergy}${averageEnergy !== '—' ? ' / 10' : ''} across recorded days.`} tone="peach"/><InfoCard icon={<Activity/>} title="Average stress" text={`${averageStress}${averageStress !== '—' ? ' / 10' : ''} across recorded days.`} tone="mint"/></div><section className="panel generic-panel"><div className="panel-heading"><div><h3>Your last 7 days</h3><p>Only days with saved check-ins show values; missing days remain clearly marked.</p></div><button className="secondary-button report-copy" onClick={async()=>{try{await navigator.clipboard.writeText(weeklyReportText);notify("Weekly report copied. You can paste it into JARVIS OS.");}catch{notify("Could not copy automatically. Check clipboard permission and try again.");}}}><BookOpen size={14}/> Copy weekly report</button></div><div className="trend-grid"><div className="trend-panel"><div className="trend-title">Energy <span>out of 10</span></div><div className="trend-bars">{weekTimeline.map(day=><div className="trend-column" key={`energy-${day.key}`}><div className="trend-bar-area">{day.record ? <div className="trend-bar energy-bar" style={{height:`${Math.max(4,day.record.energy*10)}%`}} title={`${day.key}: energy ${day.record.energy}/10`}/> : <div className="trend-missing" title={`${day.key}: no check-in`}>—</div>}</div><small>{day.label}</small></div>)}</div></div><div className="trend-panel"><div className="trend-title">Stress <span>out of 10</span></div><div className="trend-bars">{weekTimeline.map(day=><div className="trend-column" key={`stress-${day.key}`}><div className="trend-bar-area">{day.record ? <div className="trend-bar stress-bar" style={{height:`${Math.max(4,day.record.stress*10)}%`}} title={`${day.key}: stress ${day.record.stress}/10`}/> : <div className="trend-missing" title={`${day.key}: no check-in`}>—</div>}</div><small>{day.label}</small></div>)}</div></div></div><div className="trend-legend"><span><i className="legend-energy"/> Energy</span><span><i className="legend-stress"/> Stress</span><span>— No saved check-in</span></div></section><section className="panel generic-panel"><h3>Look back with kindness</h3><p className="muted">What went well, even in a small way?</p><textarea value={reflections[todayKey] ?? ''} onChange={e=>setReflections(old=>({...old,[todayKey]:e.target.value}))} placeholder="Today, I’m glad that…"/><div className="reflection-prompts"><button onClick={()=>setReflections(old=>({...old,[todayKey]:(old[todayKey] ?? '')+'\nOne thing I handled well: '}))}>One thing I handled well</button><button onClick={()=>setReflections(old=>({...old,[todayKey]:(old[todayKey] ?? '')+'\nSomething I can let go of: '}))}>Something to let go of</button><button onClick={()=>setReflections(old=>({...old,[todayKey]:(old[todayKey] ?? '')+'\nTomorrow, I’ll start with: '}))}>A gentle start tomorrow</button></div><button className="primary-button" onClick={async()=>{ const savedReflection = reflections[todayKey] ?? ''; const record: DailyRecord = {date:todayKey,tasksTotal:todayTasks.length,tasksCompleted:completed,mood,energy,stress,reflection:savedReflection,updatedAt:new Date().toISOString()}; const nextHistory = {...history,[todayKey]:record}; setHistory(nextHistory); try { localStorage.setItem(STORAGE_KEY, JSON.stringify({tasks,events,mood,energy,stress,reflection,goal,financeNote,reflections,history:nextHistory,finance,transactions,goals} satisfies SavedState)); } catch { /* Keep the in-memory review available if device storage is unavailable. */ } if (supabase && user && cloudReady) { const {error} = await supabase.from('user_workspace').upsert({user_id:user.id,data:{tasks,events,mood,energy,stress,reflection,goal,financeNote,reflections,history:nextHistory,finance,transactions,goals}},{onConflict:'user_id'}); if(error) { notify('Review saved on this device, but cloud sync failed.'); return } } notify('Today’s review saved to history.') }}>Save today’s review</button></section><section className="panel generic-panel"><div className="panel-heading"><div><h3>Recent daily history</h3><p>Your past days stay saved separately.</p></div><span className="eyebrow">LAST 7 DAYS</span></div>{recentRecords.length ? recentRecords.map(record=><div className="task-row" key={record.date}><div className="round-icon lilac"><BookOpen size={16}/></div><div className="task-main"><b>{new Intl.DateTimeFormat('en',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'}).format(new Date(`${record.date}T12:00:00Z`))}</b><span>{record.tasksCompleted}/{record.tasksTotal} tasks · Mood: {record.mood} · Energy {record.energy}/10 · Stress {record.stress}/10</span>{record.reflection && <small>{record.reflection}</small>}</div></div>) : <div className="empty-state">No saved reviews yet. Write a reflection and press “Save today’s review” to create your first record.</div>}</section></> }
+
+        {section === 'Health & Fitness' && <FitnessNutrition data={fitnessData} onChange={setFitnessData} date={todayKey} />}
 
         {section === 'Settings' && <>
           <PageTitle eyebrow="YOUR ACCOUNT, YOUR CONTROL" title="Settings" sub="Manage your profile, sign-in details and account security."/>
