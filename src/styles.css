@@ -357,3 +357,11 @@
 .fitness-goals{border-top:1px solid #f1eff6;margin-top:15px;padding-top:15px}
 @media(max-width:850px){.fitness-columns{grid-template-columns:1fr}.fitness-heading h1{font-size:24px}}
 @media(max-width:600px){.fitness-heading{align-items:flex-start}.fitness-heading h1{font-size:21px}.fitness-mascot{min-width:94px;padding:10px}.fitness-stats{grid-template-columns:1fr;gap:9px}.fitness-stats article{padding:13px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:7px 10px}.fitness-stats article>span{grid-column:1}.fitness-stats article>strong{grid-column:2;grid-row:1/3}.fitness-stats article>small{grid-column:1}.fitness-panel{padding:15px}.fitness-history-row{grid-template-columns:1fr 1fr;gap:7px}.fitness-tabs button{flex:1;padding:10px 7px}}
+
+.fitness-plan-edit{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:8px;align-items:end;flex:1;min-width:0}
+.fitness-plan-edit label,.fitness-exercise-fields label{display:flex;flex-direction:column;gap:5px;color:#9a95aa;font-size:9px;min-width:0}
+.fitness-plan-edit input,.fitness-exercise-fields input{width:100%;min-width:0;border:1px solid #ece8f4;border-radius:7px;padding:8px;background:#fdfcff;color:var(--ink);font:inherit;font-size:10px}
+.fitness-plan-edit small{grid-column:1/-1}
+.fitness-exercise-fields{display:grid;grid-template-columns:minmax(0,1.4fr) 55px minmax(0,1fr);gap:7px;flex:1;min-width:0}
+.fitness-exercise{align-items:flex-end}
+@media(max-width:600px){.fitness-plan-edit{grid-template-columns:minmax(0,1fr) 85px}.fitness-exercise-fields{grid-template-columns:1fr 55px}.fitness-exercise-fields label:last-child{grid-column:1/-1}}
