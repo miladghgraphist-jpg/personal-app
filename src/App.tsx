@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Activity, ArrowDown, ArrowUpRight, BarChart3, Check, ChevronLeft, CirclePlus, Dumbbell, Flame, Heart, Home, Pencil, Plus, RotateCcw, Search, Settings2, Sparkles, Utensils, X } from 'lucide-react'
 import './styles.css'
 
@@ -96,24 +96,23 @@ export default function App() {
   function addFood(food: Food) {
     updateDay({ ...day, foods: [...day.foods, { ...food, id: uid() }] })
     setFoodSearch('')
-    setTab('today')
     setNotice(`${food.name} added to today's log`)
   }
-  function saveCustomFood(e: React.FormEvent) {
+  function saveCustomFood(e: FormEvent) {
     e.preventDefault()
     if (!customFood.name.trim() || !customFood.kcal || !customFood.source.trim()) { setNotice('Add a food name, calories and a source.'); return }
     addFood({ id: uid(), name: customFood.name.trim(), amount: Number(customFood.amount) || 100, unit: 'g', kcal: Number(customFood.kcal) || 0, protein: Number(customFood.protein) || 0, carbs: Number(customFood.carbs) || 0, fat: Number(customFood.fat) || 0, source: customFood.source.trim() })
     setCustomFood({ name: '', amount: '100', kcal: '', protein: '', carbs: '', fat: '', source: '' })
     setShowFoodForm(false)
   }
-  function addWorkout(e: React.FormEvent) {
+  function addWorkout(e: FormEvent) {
     e.preventDefault()
     if (!workoutName.trim()) return
     const w: Workout = { id: uid(), title: workoutName.trim(), subtitle: 'Custom plan', minutes: 15, exercises: exerciseName.trim() ? [{ id: uid(), name: exerciseName.trim(), sets: 2, reps: '8 reps', done: false }] : [] }
     setData(d => ({ ...d, workouts: [...d.workouts, w] }))
     setSelectedWorkout(w.id); setWorkoutName(''); setExerciseName(''); setShowWorkoutForm(false); setNotice('Your workout plan was created')
   }
-  function saveGoals(e: React.FormEvent) {
+  function saveGoals(e: FormEvent) {
     e.preventDefault()
     setData(d => ({ ...d, goalKcal: Math.max(0, Number(goalKcal) || 0), goalProtein: Math.max(0, Number(goalProtein) || 0) }))
     setEditGoals(false); setNotice('Your daily targets were updated')
